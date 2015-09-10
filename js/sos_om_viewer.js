@@ -4,12 +4,15 @@
 //var spinner=new spinner();
 var endpoint="http://localhost/sos";
 endpoint="http://test-sk.irea.cnr.it/observations/sos";
+var endpoints=[endpoint,"http://nextdata.get-it.it/observations/sos"];
 var geoserveruri="http://test-sk.irea.cnr.it/geoserver/ows";
-var callback={
+
+/*var callback={
     loadedCapabilities:function(){
         console.log("loadedCapabilities to be implemented");
     }
 };
+*/
 var gettext=gettext||function (txt){return txt};
 var currentFoi = undefined, //added 20141006
     currentFois = [],
@@ -43,7 +46,7 @@ $(document).ready(function () {
 
 
 
-
+    /*
     $('.gettext').text(function (e) {
         return gettext($(this).text());
     });
@@ -60,7 +63,7 @@ $(document).ready(function () {
         })
         .html('<i class="glyphicon glyphicon-question-sign" aria-hidden="true"></i>')
         .popover({trigger: 'hover'});
-
+    */
 
 
 });
@@ -114,6 +117,11 @@ function refreshGeoJsonLayer() {
     currentFoisGeoJsonLayer.clearLayers();
     currentFoisGeoJsonLayer.addData(currentFois2GeoJson());
 
+    //var markers = L.markerClusterGroup();
+    markers.addLayer(currentFoisGeoJsonLayer);
+    //map.addLayer(markers);
+
+
     console.warn("currentFois.length:" + currentFois.length);
 
     if (currentFois.length > 0) {
@@ -145,7 +153,7 @@ function refreshGeoJsonLayer() {
 
 }
 
-
+var markers;
 function loadMap() {
 
     console.log("loading map");
@@ -220,13 +228,16 @@ function loadMap() {
             layer.bindPopup(currentFoiPopupHtml(feature)).openPopup();
         }
     };
+    markers = L.markerClusterGroup();
+
 
     lcontrol.addOverlay(
-        currentFoisGeoJsonLayer,
+        markers,//currentFoisGeoJsonLayer,
         "<div id='currentFoisGeoJsonLayerLabel' style='display: inline-block;vertical-align:middle;color:blue;'>"+
         gettext("Available Features of Interest")+
         "</div>"
     );
+
 
     // testing Leaflet control locate
     L.control.locate().addTo(map);
