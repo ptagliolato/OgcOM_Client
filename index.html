@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!--<script src="http://google-code-prettify.googlecode.com/svn/loader/run_prettify.js?skin=sunburst"></script>
+    <script src="http://google-code-prettify.googlecode.com/svn/trunk/src/prettify.js"></script>
+
+    <link rel="stylesheet" type="text/css"
+          href="http://google-code-prettify.googlecode.com/svn/loader/skins/sunburst.css">
+    -->
+    <link rel="stylesheet" media="screen" href="css/bootstrap.min.css"/>
+    <link rel="stylesheet" media="screen" href="css/bootstrap-theme.min.css"/>
+
+    <link rel="stylesheet" media="screen" href="css/leaflet.css"/>
+
+    <!--link rel="stylesheet" media="screen" href="css/map.css"/-->
+
+
+    <style type="text/css">
+
+
+        .vspaceafter {
+            margin-bottom: 1em;
+        }
+
+
+
+
+        .bs-callout {
+            border-color: #eee;
+            border-image: none;
+            border-radius: 3px;
+            border-style: solid;
+            border-width: 1px 1px 1px 5px;
+            margin: 20px 0;
+            padding: 20px;
+        }
+
+        .bs-callout-warning {
+            border-left-color: #f0ad4e;
+        }
+
+        .bs-callout-warning h4 {
+            color: #f0ad4e;
+        }
+
+        .bs-callout h4 {
+            margin-bottom: 5px;
+            margin-top: 0;
+        }
+
+
+
+        .popover {
+            color: #000000;
+        }
+
+        #map-container {
+            height: 400px;
+        }
+
+
+
+        #foi_tbody td.e_foi_sf {
+            max-width: 20em;
+        }
+
+        .e_foi_sf div {
+            max-width: 15em;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* cf. https://github.com/Leaflet/Leaflet/issues/845 */
+        .leaflet-control-layers-expanded {
+            max-height: 300px; /*less than map height! */
+            overflow: auto;
+        }
+
+        body {
+            padding: 0;
+            margin: 0;
+        }
+        html, body, #map {
+            height: 100%;
+            width: 100%;
+        }
+
+    </style>
+
+    <script src="js/spin.min.js"></script>
+
+    <script src="js/jquery.min.js"></script>
+
+    <script language="javascript" src="js/bootstrap.min.js"></script>
+    <!--  <script src="/jsi18n"></script>
+	<script src="js/config.js"></script> -->
+    <script src="js/ritmaresk.xsltTransformer.js"></script>
+
+    <script src="js/ritmaresk.SOS.js"></script>
+
+    <script src="js/ritmaresk.utils.js"></script>
+    <script src="js/ritmaresk.utils.swe.js"></script>
+
+
+    <script type="text/javascript" src="js/leaflet.js"></script>
+    <script type="text/javascript" src="js/L.TileLayer.BetterWMS.js"></script>
+    <!-- testing locate control for leaflet
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet"/>-->
+    <link rel="stylesheet" href="css/L.Control.Locate.min.css" />
+    <!--[if lt IE 9]>
+    <link rel="stylesheet" href="css/L.Control.Locate.ie.min.css"/>
+    <![endif]-->
+
+    <script src="js/L.Control.Locate.min.js" ></script>
+
+    <script src="js/sos_om_viewer.js"></script>
+</head>
+<body>
+
+                    <div id="map"></div>
+</body>
