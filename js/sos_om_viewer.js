@@ -8,11 +8,11 @@ var endpoints=[endpoint,"http://nextdata.get-it.it/observations/sos"];
 var geoserveruri="http://test-sk.irea.cnr.it/geoserver/ows";
 
 /*var callback={
-    loadedCapabilities:function(){
-        console.log("loadedCapabilities to be implemented");
-    }
-};
-*/
+ loadedCapabilities:function(){
+ console.log("loadedCapabilities to be implemented");
+ }
+ };
+ */
 var gettext=gettext||function (txt){return txt};
 var currentFoi = undefined, //added 20141006
     currentFois = [],
@@ -24,21 +24,27 @@ var map, currentFoisGeoJsonLayer;//, newFoiGeoJsonLayer;
 
 $(document).ready(function () {
     /*spinner_div = $('#spinner').get(0);
-    waitingResponse();
-    */
+     waitingResponse();
+     */
 
-    sos = new ritmaresk.Sos(endpoint);
+    //sos = new ritmaresk.Sos(endpoint);
+
+    SOSs=[];
+    endpoints.forEach(function(s){SOSs.add(new ritmaresk.Sos(s));});
+
+
     $("#sosEndpoint").text(endpoint);
 
     /*var idcomp = new ritmaresk.utils.namingConvention.IdComposer(baseurl_sp7, app_name, uri_sk, sk_domain_name);
 
 
-    composeResultTemplateID = idcomp.composeResultTemplateID;
-    composeObservedPropertiesCompoundId = idcomp.composeObservedPropertiesCompoundId;
-    composeFoiID_SSF_SP = idcomp.composeFoiID_SSF_SP;
-    //$("#procedures").selectmenu();
-    */
-    sos.GetCapabilities();
+     composeResultTemplateID = idcomp.composeResultTemplateID;
+     composeObservedPropertiesCompoundId = idcomp.composeObservedPropertiesCompoundId;
+     composeFoiID_SSF_SP = idcomp.composeFoiID_SSF_SP;
+     //$("#procedures").selectmenu();
+     */
+    SOSs.forEach(function(sos){sos.GetCapabilities();});
+    //sos.GetCapabilities();
 
     //TODO: remove this
     //loadWmsCapabilities("http://geo.vliz.be/geoserver/MarineRegions/wms");
@@ -47,23 +53,23 @@ $(document).ready(function () {
 
 
     /*
-    $('.gettext').text(function (e) {
-        return gettext($(this).text());
-    });
+     $('.gettext').text(function (e) {
+     return gettext($(this).text());
+     });
 
-    $(".tip")
-        .attr("data-content", function () {
-            return $(this).text();
-        })
-        .attr("data-original-title", function () {
-            return gettext($(this).attr('data-original-title'))
-        })
-        .attr("data-content", function () {
-            return gettext($(this).attr('data-content'))
-        })
-        .html('<i class="glyphicon glyphicon-question-sign" aria-hidden="true"></i>')
-        .popover({trigger: 'hover'});
-    */
+     $(".tip")
+     .attr("data-content", function () {
+     return $(this).text();
+     })
+     .attr("data-original-title", function () {
+     return gettext($(this).attr('data-original-title'))
+     })
+     .attr("data-content", function () {
+     return gettext($(this).attr('data-content'))
+     })
+     .html('<i class="glyphicon glyphicon-question-sign" aria-hidden="true"></i>')
+     .popover({trigger: 'hover'});
+     */
 
 
 });
@@ -170,9 +176,9 @@ function loadMap() {
             +"lat: "+feature.geometry.coordinates[1]+ "</br>"
             +"lon: "+feature.geometry.coordinates[0]+ "</br>"
             /*+"<button class='btn btn-primary' onclick='chooseFOI(\"" + feature.properties.identifier + "\");'>"
-            + gettext("Use")
-                //+gettext("Use this Feature of Interest")
-            + "</button>"*/
+             + gettext("Use")
+             //+gettext("Use this Feature of Interest")
+             + "</button>"*/
             ;
         //+ "</br>"
         //+ latlng2string(L.GeoJSON.coordsToLatLng(feature.geometry.coordinates));
