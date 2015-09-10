@@ -4,7 +4,7 @@
 //var spinner=new spinner();
 var endpoint="http://localhost/sos";
 endpoint="http://test-sk.irea.cnr.it/observations/sos";
-var endpoints=[endpoint,"http://nextdata.get-it.it/observations/sos"];
+
 var geoserveruri="http://test-sk.irea.cnr.it/geoserver/ows";
 
 /*var callback={
