@@ -30,7 +30,7 @@ $(document).ready(function () {
     //sos = new ritmaresk.Sos(endpoint);
 
     SOSs=[];
-    endpoints.forEach(function(s){SOSs.add(new ritmaresk.Sos(s));});
+    endpoints.forEach(function(s){SOSs.push(new ritmaresk.Sos(s));});
 
 
     $("#sosEndpoint").text(endpoint);
@@ -89,7 +89,7 @@ function retrieveAllFeaturesOfInterest() {
         //currentFois = result.featureOfInterest;
         //console.warn(result);
         //return
-        outputs.add(result.featureOfInterest);
+        outputs.push(result.featureOfInterest);
 
 
     });
@@ -98,21 +98,21 @@ function retrieveAllFeaturesOfInterest() {
     return outputs;//result.featureOfInterest;
 }
 
-function currentFois2GeoJson() {
+function featureOfIInterest2GeoJson(foiJSON) {
     var coll = [];
     // REMARK: it is assumed at the moment a CRS with lat-lon order of coordinates: in geoJson the order must be reversed
-    for (var i = 0; currentFois && i < currentFois.length; i++) {
+    for (var i = 0; foiJSON && i < foiJSON.length; i++) {
         var f = {
             "type": "Feature",
             "properties": {
-                "identifier": currentFois[i].identifier,
-                "name": currentFois[i].name
+                "identifier": foiJSON[i].identifier,
+                "name": foiJSON[i].name
             },
             "geometry": {
-                "type": currentFois[i].geometry.type,
-                "coordinates": [currentFois[i].geometry.coordinates[1], currentFois[i].geometry.coordinates[0]]
+                "type": foiJSON[i].geometry.type,
+                "coordinates": [foiJSON[i].geometry.coordinates[1], foiJSON[i].geometry.coordinates[0]]
             },
-            "crs": currentFois[i].geometry.crs
+            "crs": foiJSON[i].geometry.crs
         };
 
         coll.push(f);
@@ -128,10 +128,13 @@ function currentFois2GeoJson() {
 function refreshGeoJsonLayer() {
     //45.42106/12.34355
     console.log("begin refresh");
+    var featuresOfInterestSets=retrieveAllFeaturesOfInterest();
 
     currentFoisGeoJsonLayer.clearLayers();
-    currentFoisGeoJsonLayer.addData(currentFois2GeoJson());
 
+    featuresOfInterestSets.forEach(function(fois){
+        currentFoisGeoJsonLayer.addData(featureOfIInterest2GeoJson(fois));
+    });
     //var markers = L.markerClusterGroup();
     markers.addLayer(currentFoisGeoJsonLayer);
     //map.addLayer(markers);
@@ -216,7 +219,7 @@ function loadMap() {
     ).addTo(map);
 
 
-    currentFois=retrieveAllFeaturesOfInterest();
+    //currentFois=retrieveAllFeaturesOfInterest();
     // --- load WMS layers ---
     ritmaresk.utils.swe.wmsGetLayers_NameTitleType(geoserveruri,false).forEach(function (l) {
         overlayMaps[l.title] = addWmsLayer(geoserveruri, l.name, map);
