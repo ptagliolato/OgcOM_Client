@@ -8,11 +8,11 @@ endpoint="http://test-sk.irea.cnr.it/observations/sos";
 var geoserveruri="http://test-sk.irea.cnr.it/geoserver/ows";
 
 /*var callback={
-    loadedCapabilities:function(){
-        console.log("loadedCapabilities to be implemented");
-    }
-};
-*/
+ loadedCapabilities:function(){
+ console.log("loadedCapabilities to be implemented");
+ }
+ };
+ */
 var gettext=gettext||function (txt){return txt};
 var currentFoi = undefined, //added 20141006
     currentFois = [],
@@ -24,21 +24,27 @@ var map, currentFoisGeoJsonLayer;//, newFoiGeoJsonLayer;
 
 $(document).ready(function () {
     /*spinner_div = $('#spinner').get(0);
-    waitingResponse();
-    */
+     waitingResponse();
+     */
 
-    sos = new ritmaresk.Sos(endpoint);
+    //sos = new ritmaresk.Sos(endpoint);
+
+    SOSs=[];
+    endpoints.forEach(function(s){SOSs.push(new ritmaresk.Sos(s));});
+
+
     $("#sosEndpoint").text(endpoint);
 
     /*var idcomp = new ritmaresk.utils.namingConvention.IdComposer(baseurl_sp7, app_name, uri_sk, sk_domain_name);
 
 
-    composeResultTemplateID = idcomp.composeResultTemplateID;
-    composeObservedPropertiesCompoundId = idcomp.composeObservedPropertiesCompoundId;
-    composeFoiID_SSF_SP = idcomp.composeFoiID_SSF_SP;
-    //$("#procedures").selectmenu();
-    */
-    sos.GetCapabilities();
+     composeResultTemplateID = idcomp.composeResultTemplateID;
+     composeObservedPropertiesCompoundId = idcomp.composeObservedPropertiesCompoundId;
+     composeFoiID_SSF_SP = idcomp.composeFoiID_SSF_SP;
+     //$("#procedures").selectmenu();
+     */
+    SOSs.forEach(function(sos){sos.GetCapabilities();});
+    //sos.GetCapabilities();
 
     //TODO: remove this
     //loadWmsCapabilities("http://geo.vliz.be/geoserver/MarineRegions/wms");
@@ -47,57 +53,66 @@ $(document).ready(function () {
 
 
     /*
-    $('.gettext').text(function (e) {
-        return gettext($(this).text());
-    });
+     $('.gettext').text(function (e) {
+     return gettext($(this).text());
+     });
 
-    $(".tip")
-        .attr("data-content", function () {
-            return $(this).text();
-        })
-        .attr("data-original-title", function () {
-            return gettext($(this).attr('data-original-title'))
-        })
-        .attr("data-content", function () {
-            return gettext($(this).attr('data-content'))
-        })
-        .html('<i class="glyphicon glyphicon-question-sign" aria-hidden="true"></i>')
-        .popover({trigger: 'hover'});
-    */
+     $(".tip")
+     .attr("data-content", function () {
+     return $(this).text();
+     })
+     .attr("data-original-title", function () {
+     return gettext($(this).attr('data-original-title'))
+     })
+     .attr("data-content", function () {
+     return gettext($(this).attr('data-content'))
+     })
+     .html('<i class="glyphicon glyphicon-question-sign" aria-hidden="true"></i>')
+     .popover({trigger: 'hover'});
+     */
 
 
 });
 
+/**
+ * returns an array of FOI in json format
+ * @returns {Array}
+ */
 function retrieveAllFeaturesOfInterest() {
     var fois2Json = ritmaresk.utils.swe.sosGetFeatureOfInterestResponse_2_Json;
 
-    var output = fois2Json(sos.kvp.urlGetFeatureOfInterest());
+    var outputs = [];
+    // TODO: optimize this
+    SOSs.forEach(function (sos){
+        var output = fois2Json(sos.kvp.urlGetFeatureOfInterest());
+        var result = JSON.parse(output.textContent);
+        //currentFois = result.featureOfInterest;
+        //console.warn(result);
+        //return
+        outputs.push(result.featureOfInterest);
 
 
+    });
 
-    //prettyprinter.printJson(JSON.parse(output.textContent), "#foi_json_new", 4);
 
-    var result = JSON.parse(output.textContent);
-    //currentFois = result.featureOfInterest;
-    console.warn(result);
-    return result.featureOfInterest;
+    return outputs;//result.featureOfInterest;
 }
 
-function currentFois2GeoJson() {
+function featureOfIInterest2GeoJson(foiJSON) {
     var coll = [];
     // REMARK: it is assumed at the moment a CRS with lat-lon order of coordinates: in geoJson the order must be reversed
-    for (var i = 0; currentFois && i < currentFois.length; i++) {
+    for (var i = 0; foiJSON && i < foiJSON.length; i++) {
         var f = {
             "type": "Feature",
             "properties": {
-                "identifier": currentFois[i].identifier,
-                "name": currentFois[i].name
+                "identifier": foiJSON[i].identifier,
+                "name": foiJSON[i].name
             },
             "geometry": {
-                "type": currentFois[i].geometry.type,
-                "coordinates": [currentFois[i].geometry.coordinates[1], currentFois[i].geometry.coordinates[0]]
+                "type": foiJSON[i].geometry.type,
+                "coordinates": [foiJSON[i].geometry.coordinates[1], foiJSON[i].geometry.coordinates[0]]
             },
-            "crs": currentFois[i].geometry.crs
+            "crs": foiJSON[i].geometry.crs
         };
 
         coll.push(f);
@@ -113,10 +128,13 @@ function currentFois2GeoJson() {
 function refreshGeoJsonLayer() {
     //45.42106/12.34355
     console.log("begin refresh");
+    var featuresOfInterestSets=retrieveAllFeaturesOfInterest();
 
     currentFoisGeoJsonLayer.clearLayers();
-    currentFoisGeoJsonLayer.addData(currentFois2GeoJson());
 
+    featuresOfInterestSets.forEach(function(fois){
+        currentFoisGeoJsonLayer.addData(featureOfIInterest2GeoJson(fois));
+    });
     //var markers = L.markerClusterGroup();
     markers.addLayer(currentFoisGeoJsonLayer);
     //map.addLayer(markers);
@@ -170,9 +188,9 @@ function loadMap() {
             +"lat: "+feature.geometry.coordinates[1]+ "</br>"
             +"lon: "+feature.geometry.coordinates[0]+ "</br>"
             /*+"<button class='btn btn-primary' onclick='chooseFOI(\"" + feature.properties.identifier + "\");'>"
-            + gettext("Use")
-                //+gettext("Use this Feature of Interest")
-            + "</button>"*/
+             + gettext("Use")
+             //+gettext("Use this Feature of Interest")
+             + "</button>"*/
             ;
         //+ "</br>"
         //+ latlng2string(L.GeoJSON.coordsToLatLng(feature.geometry.coordinates));
@@ -201,7 +219,7 @@ function loadMap() {
     ).addTo(map);
 
 
-    currentFois=retrieveAllFeaturesOfInterest();
+    //currentFois=retrieveAllFeaturesOfInterest();
     // --- load WMS layers ---
     ritmaresk.utils.swe.wmsGetLayers_NameTitleType(geoserveruri,false).forEach(function (l) {
         overlayMaps[l.title] = addWmsLayer(geoserveruri, l.name, map);
