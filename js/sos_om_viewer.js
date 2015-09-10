@@ -74,19 +74,28 @@ $(document).ready(function () {
 
 });
 
+/**
+ * returns an array of FOI in json format
+ * @returns {Array}
+ */
 function retrieveAllFeaturesOfInterest() {
     var fois2Json = ritmaresk.utils.swe.sosGetFeatureOfInterestResponse_2_Json;
 
-    var output = fois2Json(sos.kvp.urlGetFeatureOfInterest());
+    var outputs = [];
+    // TODO: optimize this
+    SOSs.forEach(function (sos){
+        var output = fois2Json(sos.kvp.urlGetFeatureOfInterest());
+        var result = JSON.parse(output.textContent);
+        //currentFois = result.featureOfInterest;
+        //console.warn(result);
+        //return
+        outputs.add(result.featureOfInterest);
 
 
+    });
 
-    //prettyprinter.printJson(JSON.parse(output.textContent), "#foi_json_new", 4);
 
-    var result = JSON.parse(output.textContent);
-    //currentFois = result.featureOfInterest;
-    console.warn(result);
-    return result.featureOfInterest;
+    return outputs;//result.featureOfInterest;
 }
 
 function currentFois2GeoJson() {
