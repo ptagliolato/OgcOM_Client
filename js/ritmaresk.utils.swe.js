@@ -1,4 +1,5 @@
 /**
+ *
  *    ritmaresk.utils.swe.js
  *
  *  author: Paolo Tagliolato - CNR IREA in Milano - www.irea.cnr.it
@@ -13,7 +14,7 @@
 
 /**
  * @namespace
- * @todo consider the following refactoring: move itmaresk.utils.namingConvention.xmlProducer here (and create jsonProducer for json related functions)
+ * @todo consider the following refactoring: move ritmaresk.utils.namingConvention.xmlProducer here (and create jsonProducer for json related functions)
  */
 ritmaresk.utils.swe = (function () {
 

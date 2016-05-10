@@ -4,15 +4,13 @@
 //var spinner=new spinner();
 var endpoint="http://localhost/sos";
 endpoint="http://test-sk.irea.cnr.it/observations/sos";
+var endpoints=[endpoint,"http://nextdata.get-it.it/observations/sos"];
 
+// TODO: consider using CORS enabled endpoint or proxy.
+console.debug("enable CORS on WMS-WFS endpoint or use a proxy");
 var geoserveruri="http://test-sk.irea.cnr.it/geoserver/ows";
 
-/*var callback={
- loadedCapabilities:function(){
- console.log("loadedCapabilities to be implemented");
- }
- };
- */
+
 var gettext=gettext||function (txt){return txt};
 var currentFoi = undefined, //added 20141006
     currentFois = [],
@@ -21,13 +19,8 @@ var map, currentFoisGeoJsonLayer;//, newFoiGeoJsonLayer;
 
 
 
-
 $(document).ready(function () {
-    /*spinner_div = $('#spinner').get(0);
-     waitingResponse();
-     */
 
-    //sos = new ritmaresk.Sos(endpoint);
 
     SOSs=[];
     endpoints.forEach(function(s){SOSs.push(new ritmaresk.Sos(s));});
@@ -35,42 +28,12 @@ $(document).ready(function () {
 
     $("#sosEndpoint").text(endpoint);
 
-    /*var idcomp = new ritmaresk.utils.namingConvention.IdComposer(baseurl_sp7, app_name, uri_sk, sk_domain_name);
 
-
-     composeResultTemplateID = idcomp.composeResultTemplateID;
-     composeObservedPropertiesCompoundId = idcomp.composeObservedPropertiesCompoundId;
-     composeFoiID_SSF_SP = idcomp.composeFoiID_SSF_SP;
-     //$("#procedures").selectmenu();
-     */
     SOSs.forEach(function(sos){sos.GetCapabilities();});
-    //sos.GetCapabilities();
 
     //TODO: remove this
     //loadWmsCapabilities("http://geo.vliz.be/geoserver/MarineRegions/wms");
     loadMap();
-
-
-
-    /*
-     $('.gettext').text(function (e) {
-     return gettext($(this).text());
-     });
-
-     $(".tip")
-     .attr("data-content", function () {
-     return $(this).text();
-     })
-     .attr("data-original-title", function () {
-     return gettext($(this).attr('data-original-title'))
-     })
-     .attr("data-content", function () {
-     return gettext($(this).attr('data-content'))
-     })
-     .html('<i class="glyphicon glyphicon-question-sign" aria-hidden="true"></i>')
-     .popover({trigger: 'hover'});
-     */
-
 
 });
 
@@ -93,9 +56,13 @@ function retrieveAllFeaturesOfInterest() {
 
 
     });
-
-
     return outputs;//result.featureOfInterest;
+}
+
+function retrieveFeatureOfInterest(sos){
+    var output = ritmaresk.utils.swe.sosGetFeatureOfInterestResponse_2_Json(sos.kvp.urlGetFeatureOfInterest());
+    var result = JSON.parse(output.textContent);
+    return result.featureOfInterest;
 }
 
 function featureOfIInterest2GeoJson(foiJSON) {
@@ -153,17 +120,6 @@ function refreshGeoJsonLayer() {
 
     console.log("finished refresh");
 
-    //
-    if(!map.newfoimarker && currentFoi && currentFoi.isNew){
-        map.newfoimarker = L.marker(currentFoi.geometry.coordinates.map(Number), {icon: L.icon({
-            iconUrl:'css/images/marker-icon-green-2x.png',
-            iconSize:    [25, 41],
-            iconAnchor:  [12, 41],
-            popupAnchor: [1, -34],
-            shadowSize:  [41, 41]
-        })});
-        map.newfoimarker.addTo(map);
-    }
 
     //let the layer appear!
     $('#currentFoisGeoJsonLayerLabel').click();
@@ -186,14 +142,7 @@ function loadMap() {
         console.warn(JSON.stringify(feature));
         return "<h4>"+feature.properties.name+"</h4>"
             +"lat: "+feature.geometry.coordinates[1]+ "</br>"
-            +"lon: "+feature.geometry.coordinates[0]+ "</br>"
-            /*+"<button class='btn btn-primary' onclick='chooseFOI(\"" + feature.properties.identifier + "\");'>"
-             + gettext("Use")
-             //+gettext("Use this Feature of Interest")
-             + "</button>"*/
-            ;
-        //+ "</br>"
-        //+ latlng2string(L.GeoJSON.coordsToLatLng(feature.geometry.coordinates));
+            +"lon: "+feature.geometry.coordinates[0]+ "</br>";
     }
     function clickOnMapPopupHtml(latlng){
         return "<button class='btn btn-link' onclick='setCoordsForNewFoi(" + JSON.stringify(latlng) + ")'>"
@@ -206,7 +155,6 @@ function loadMap() {
         console.log("removing map");
         map.remove();
         map = undefined;
-        //overlayMaps={};//TODO:se overlayMaps viene spostato in map.
     }
     map = map || L.map('map');
 
@@ -222,9 +170,10 @@ function loadMap() {
     //currentFois=retrieveAllFeaturesOfInterest();
     // --- load WMS layers ---
     ritmaresk.utils.swe.wmsGetLayers_NameTitleType(geoserveruri,false).forEach(function (l) {
-        overlayMaps[l.title] = addWmsLayer(geoserveruri, l.name, map);
+        overlayMaps[l.title] = createWmsLayer(geoserveruri, l.name, map);
     });
 
+    /*
     // popup with link to set the FoI coordinates (EPSG:4326)
     map.on('contextmenu', function onMapClick(e) {
         L.popup()
@@ -232,10 +181,14 @@ function loadMap() {
             .setContent(clickOnMapPopupHtml(e.latlng))
             .openOn(map);
     });
+    */
 
     // --- init leaflet control (overlay selection) ---
     var lcontrol = L.control.layers(baseLayers, overlayMaps).addTo(map);
 
+    L.control.locate().addTo(map);
+
+    /* @todo: refactor this ------- */
     // --- load existing FoI (geoJSON layer)
     currentFoisGeoJsonLayer = L.geoJson();
     currentFoisGeoJsonLayer.options = {
@@ -255,23 +208,29 @@ function loadMap() {
         gettext("Available Features of Interest")+
         "</div>"
     );
-
+    /* ----- end of refactoring -----*/
 
     // testing Leaflet control locate
-    L.control.locate().addTo(map);
+
 
     refreshGeoJsonLayer();
 }
 
+function addWms(uri,themap,leafletControl,onlyWfs){
+    var overlayWms={};
+    ritmaresk.utils.swe.wmsGetLayers_NameTitleType(uri,onlyWfs).forEach(function (l) {
+        overlayWms[l.title] = createWmsLayer(uri, l.name, themap);
+    });
+    leafletControl.addOverlay(overlayWms);
+}
 
 /**
- * //TODO: fare prova con wms (betterWms supporta getfeatureinfo) per scelta SampledFeature
  * @param {string} url wms endpoint
  * @param {string} layerName as returned wms capabilities
  * @param {Leaflet.map} map
  * @returns {*}
  */
-function addWmsLayer(url, layerName, map) {
+function createWmsLayer(url, layerName, themap) {
     console.log("loading wms");
 
     // load betterWms for handling getFeatureInfo
@@ -322,7 +281,7 @@ function addWmsLayer(url, layerName, map) {
     }
 
     //override showGetFeatureInfo
-    //map.
+    // @todo check if it is possible to remove the need for "themap"
     sampledFeatureWmsLayer.showGetFeatureInfo = function (err, latlng, content) {
         if (content.features.length === 0)return;
         if (err) {
@@ -341,7 +300,7 @@ function addWmsLayer(url, layerName, map) {
         L.popup({maxWidth: 800})
             .setLatLng(latlng)
             .setContent(popupHtml)
-            .openOn(map);
+            .openOn(themap);
     };
 
 
