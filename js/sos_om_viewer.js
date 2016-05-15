@@ -3,13 +3,15 @@
  */
 //var spinner=new spinner();
 var endpoint="http://localhost/sos";
-endpoint="http://test-sk.irea.cnr.it/observations/sos";
-var endpoints=[endpoint,"http://nextdata.get-it.it/observations/sos"];
+// TODO: non funziona il link qui sotto
+//endpoint="http://sp7.irea.cnr.it/tomcat/envsos/sos";
+endpoint = "http://vesk.ve.ismar.cnr.it/observations/sos";
+var endpoints=[endpoint,
+    "http://nextdata.get-it.it/observations/sos"];
 
 // TODO: consider using CORS enabled endpoint or proxy.
 console.debug("enable CORS on WMS-WFS endpoint or use a proxy");
-var geoserveruri="http://test-sk.irea.cnr.it/geoserver/ows";
-
+var geoserveruri="http://vesk.ve.ismar.cnr.it/geoserver/ows";
 
 var gettext=gettext||function (txt){return txt};
 var currentFoi = undefined, //added 20141006
