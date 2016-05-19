@@ -94,6 +94,19 @@ ritmaresk.Sos = (function () {	//sk sos endpoint url example = http://sk.sp7.ire
                 };
                 return (    composeGet(postData)    );
             },
+            getCapabilities: function (fx_loaded){
+                $.get(
+                    self.urlGetCapabilities(),
+                    function (xml) {
+                        //debug(xml);
+                        //setSensor(json,procedure);
+                        if (fx_loaded && (typeof fx_loaded == "function")) {
+                            fx_loaded(xml);
+                        }
+                    }
+                );
+
+            },
             describeSensor: function (procedureId, fx_loaded) {
                 $.get(
                     self.kvp.urlDescribeSensor(procedureId),
@@ -235,7 +248,14 @@ ritmaresk.Sos = (function () {	//sk sos endpoint url example = http://sk.sp7.ire
                 return self.pox.postData(xmlStringInsertObservation, callback, true);
             },
 
+            getFeatureOfInterestSOS2: function(param_xmlData){
+                var data="";
+                var header='<sos:GetFeatureOfInterest service="SOS" version="2.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:sos="http://www.opengis.net/sos/2.0" xmlns:fes="http://www.opengis.net/fes/2.0" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:swe="http://www.opengis.net/swe/2.0" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:swes="http://www.opengis.net/swes/2.0" xsi:schemaLocation="http://www.opengis.net/sos/2.0 http://schemas.opengis.net/sos/2.0/sos.xsd">';
+                var footer='</sos:GetFeatureOfInterest>';
 
+                data=header+param_xmlData+footer;
+                return self.pox.postData_synchronous(data);
+            },
             /**
              *
              * @param data
@@ -260,7 +280,23 @@ ritmaresk.Sos = (function () {	//sk sos endpoint url example = http://sk.sp7.ire
                     contentType: "text/xml"
 
                 });
+            },
+            postData_synchronous: function (xmlData) {
+                debug(xmlData);
+                alert(xmlData);
+                var resultDocument =  $.ajax({
+                    type: "post",
+                    url: endpointPox,
+                    data: xmlData,
+                    async: false,
+                    dataType: "xml",
+                    contentType: "text/xml"
+
+                }).responseText;
+                return resultDocument;
             }
+
+
 
         };
 
@@ -349,7 +385,7 @@ ritmaresk.Sos = (function () {	//sk sos endpoint url example = http://sk.sp7.ire
          * @param fx_loadedCapabilities
          * @constructor
          */
-        self.GetCapabilities = function (fx_loadedCapabilities) {
+        self.GetCapabilities = function (fx_loadedCapabilities, forceXml) {
 
             var postData = {
                 "request": "GetCapabilities", "service": "SOS", "sections": ["OperationsMetadata", "Contents"]
@@ -359,17 +395,24 @@ ritmaresk.Sos = (function () {	//sk sos endpoint url example = http://sk.sp7.ire
              var postData={ "request": "GetCapabilities", "service": "SOS", "sections":
              ["ServiceIdentification", "ServiceProvider", "OperationsMetadata", "FilterCapabilities", "Contents"]};
              */
+            if(!forceXml){
+                return $.post(
+                    //TODO: when endpoint json is not available, use kvp endpoint
+                    endpointJson, JSON.stringify(postData),
+                    function (json) {
+                        setCapabilities(json);
 
-            return $.post(
-                endpointJson, JSON.stringify(postData),
-                function (json) {
-                    setCapabilities(json);
-
-                    if (fx_loadedCapabilities && (typeof fx_loadedCapabilities == "function")) {
-                        fx_loadedCapabilities(json);
+                        if (fx_loadedCapabilities && (typeof fx_loadedCapabilities == "function")) {
+                            fx_loadedCapabilities(json);
+                        }
                     }
-                }
-            )
+                )
+            }
+            else{
+                setCapabilities(ritmaresk.utils.swe.sosGetCapabilities_2_Json(self.kvp.urlGetCapabilities()));
+            }
+
+
         };
 
         /* function getSensorDescription(procedure,callback)
@@ -412,10 +455,7 @@ ritmaresk.Sos = (function () {	//sk sos endpoint url example = http://sk.sp7.ire
             }
             return (null);
         };
-        /**
-         *  perform DescribeSensor on sos endpoint with json binding
-         *  the private callback setSensor sets the sos.sensors["procedure"]=retrieved data.
-         */
+
 
     };
 

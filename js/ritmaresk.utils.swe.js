@@ -40,6 +40,16 @@ ritmaresk.utils.swe = (function () {
         };
     }
 
+
+    /**
+     * @param {string} kvp url of the sos:getCapabilities request
+     * @returns {object} Capabilities a json representation of the Capabilities declared by the SOS (kvp binding), analogous to 52N json endpoint
+     */
+    function sosGetCapabilities_2_Json(getCapabilitiesUrl) {
+        return url2Json(getCapabilitiesUrl,'xslt/capabilitiesContents2json.xsl');
+    }
+
+
     /**
      * @todo change the name: sosGetFeatureOfInterest2Json
      * @param {string} getFoiUrl kvp url of the sos:getFeatureOfInterest request
@@ -63,6 +73,32 @@ ritmaresk.utils.swe = (function () {
         output = xslt.transform(xsl, xml);//,{para1:"pippo",para2:"pluto"});
         //alert(output.textContent);
         return output;
+    }
+
+
+    // todo: check within the capabilities the available bindings for FOIs and use the appropriate one
+    function sosGetFeatureOfInterestResponsePOX2json(sos,payload){
+        //PROMEMORIA: guardo quale metodo http mi consente il sos ed eseguo la req di conseguenza
+        //var urlGetReq="";
+        //sos.capabilities.operationMetadata.operations.GetFeatureOfInterest.dcp.map(function(p){urlGetReq= p.method==="GET"? p.href:urlGetReq});
+        //if(urlGetReq){return sosGetFeatureOfInterestResponse_2_Json(urlGetReq);}
+        //else{
+         var xmlDocument=sos.pox.getFeatureOfInterestSOS2(payload);
+
+        //}
+        var xsl,
+            filenameXsl = "xslt/getFOIJson.xsl",
+            xslt = ritmaresk.XsltTransformer.getInstance();
+
+        xsl = xslt.loadXMLDoc(filenameXsl);
+
+        var xmlOut = xslt.transform(xsl, xmlDocument, undefined, undefined);
+
+        stringJSON = (new XMLSerializer()).serializeToString(xmlOut);
+        console.log(stringJSON);
+        stringJSON = stringJSON.replace(/[\n\r\t\s]/g, " ");
+        console.log(stringJSON);
+        return JSON.parse(stringJSON);
     }
 
     /**
@@ -201,7 +237,9 @@ ritmaresk.utils.swe = (function () {
     return {
         composeFoiJson_SSF_SSP: composeSSF_SSP,
         composeFoiJson: composeFoiJson,
+        sosGetCapabilities_2_Json: sosGetCapabilities_2_Json,
         sosGetFeatureOfInterestResponse_2_Json: sosGetFeatureOfInterestResponse_2_Json,
+        sosGetFeatureOfInterestResponsePOX2json:sosGetFeatureOfInterestResponsePOX2json,
         sosInsertionOperationsResponse2json: sosInsertionOperationsResponse2json,
         wmsDescribeLayerResponse2json:wmsDescribeLayerResponse2json,
         wmsGetLayersWFS_NameTitleType:wmsGetLayersWFS_NameTitleType,

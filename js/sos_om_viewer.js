@@ -6,8 +6,11 @@ var endpoint="http://localhost/sos";
 // TODO: non funziona il link qui sotto
 //endpoint="http://sp7.irea.cnr.it/tomcat/envsos/sos";
 endpoint = "http://vesk.ve.ismar.cnr.it/observations/sos";
+var urlAdapterInat2SOS="http://adamassoft.it/jbossTest";
 var endpoints=[endpoint,
-    "http://nextdata.get-it.it/observations/sos"];
+    "http://nextdata.get-it.it/observations/sos",
+    urlAdapterInat2SOS
+];
 
 // TODO: consider using CORS enabled endpoint or proxy.
 console.debug("enable CORS on WMS-WFS endpoint or use a proxy");
@@ -31,7 +34,16 @@ $(document).ready(function () {
     $("#sosEndpoint").text(endpoint);
 
 
-    SOSs.forEach(function(sos){sos.GetCapabilities();});
+    SOSs.forEach(function(sos){
+        //TODO: remove next line (it's a workaround) when the adapter GetCapabilities will respond at the "/kvp" url
+        var forceXml=false;
+        if(sos.url===urlAdapterInat2SOS) {
+            sos.kvp.urlGetCapabilities=function(){ return sos.url+"/GetCapabilities"; };
+            var forceXml=true;
+
+        }
+        sos.GetCapabilities(null,forceXml);
+    });
 
     //TODO: remove this
     //loadWmsCapabilities("http://geo.vliz.be/geoserver/MarineRegions/wms");
@@ -49,14 +61,19 @@ function retrieveAllFeaturesOfInterest() {
     var outputs = [];
     // TODO: optimize this
     SOSs.forEach(function (sos){
-        var output = fois2Json(sos.kvp.urlGetFeatureOfInterest());
-        var result = JSON.parse(output.textContent);
-        //currentFois = result.featureOfInterest;
-        //console.warn(result);
-        //return
-        outputs.push(result.featureOfInterest);
-
-
+        if(sos.url===urlAdapterInat2SOS) {
+            var pl='<sos:spatialFilter><fes:BBOX><fes:ValueReference>sams:shape</fes:ValueReference><gml:Envelope srsName="http://www.opengis.net/def/crs/EPSG/0/4326"> <gml:lowerCorner>0 0</gml:lowerCorner>' +
+        '<gml:upperCorner>60 60</gml:upperCorner> </gml:Envelope> </fes:BBOX></sos:spatialFilter>';
+            ritmaresk.utils.swe.sosGetFeatureOfInterestResponsePOX2json(sos,pl);
+        }
+        else{
+            var output = fois2Json(sos.kvp.urlGetFeatureOfInterest());
+            var result = JSON.parse(output.textContent);
+            //currentFois = result.featureOfInterest;
+            //console.warn(result);
+            //return
+            outputs.push(result.featureOfInterest);
+        }
     });
     return outputs;//result.featureOfInterest;
 }
@@ -188,11 +205,13 @@ function loadMap() {
     // --- init leaflet control (overlay selection) ---
     var lcontrol = L.control.layers(baseLayers, overlayMaps).addTo(map);
 
+
     L.control.locate().addTo(map);
 
     /* @todo: refactor this ------- */
     // --- load existing FoI (geoJSON layer)
     currentFoisGeoJsonLayer = L.geoJson();
+
     currentFoisGeoJsonLayer.options = {
         style: function (feature) {
             return {color: "blue"};
@@ -203,6 +222,16 @@ function loadMap() {
     };
     markers = L.markerClusterGroup();
 
+    // TODO: refresh geoJSON layer when bbox changes.
+/*
+    map.on('zoomend', function() {
+        // callback
+    });
+
+    map.on('dragend', function() {
+        // callback
+    });
+*/
 
     lcontrol.addOverlay(
         markers,//currentFoisGeoJsonLayer,
