@@ -283,15 +283,13 @@ ritmaresk.Sos = (function () {	//sk sos endpoint url example = http://sk.sp7.ire
             },
             postData_synchronous: function (xmlData) {
                 debug(xmlData);
-                alert(xmlData);
+                //alert(xmlData);
                 var resultDocument =  $.ajax({
                     type: "post",
                     url: endpointPox,
                     data: xmlData,
                     async: false,
-                    dataType: "xml",
-                    contentType: "text/xml"
-
+                    contentType: "application/xml"
                 }).responseText;
                 return resultDocument;
             }

@@ -30,7 +30,12 @@
 				<xsl:for-each select="sos:featureMember/sams:SF_SpatialSamplingFeature">
 					{
 						"identifier":"<xsl:value-of select="gml:identifier"/>",
+                        "id":"<xsl:value-of select="gml:identifier"/>",
 						"name":"<xsl:value-of select="gml:name"/>",
+                        "sampledFeature":{
+                            "title":"<xsl:value-of select="//sf:sampledFeature/@xlink:title"/>",
+                            "href":"<xsl:value-of select="//sf:sampledFeature/@xlink:href"/>"
+                        },
 						"geometry":{
 							<xsl:choose>
 								<xsl:when test="sf:type/@xlink:href='http://www.opengis.net/def/samplingFeatureType/OGC-OM/2.0/SF_SamplingPoint'">
@@ -51,8 +56,7 @@
 								</xsl:when>
 							</xsl:choose>
 
-						},
-						"sampledFeature":"<xsl:value-of select="sf:sampledFeature/@xlink:href"/>"
+						}
 					}
 					<xsl:if test="position() != last()">
 			          ,

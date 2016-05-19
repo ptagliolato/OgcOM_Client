@@ -166,13 +166,33 @@ ritmaresk.XsltTransformer = (function () {
 
                 }
 
+                function debugObject(obj,name, suppressLog){
+                    var dbgObj={object:obj,object2string:(new XMLSerializer()).serializeToString(obj)};
+                    if(!suppressLog){
+                        console.warn("'"+name+"' content begins with:");
+                        console.log(dbgObj.object2string.substring(0,100));
+                        console.log("inspect the object for further information:");
+                        console.log(dbgObj);
+                    }
+                    return dbgObj;
+                }
+
+
                 console.log(strSaxon);
-                console.warn("where 'file.xml' content is:");
-                console.log((new XMLSerializer()).serializeToString(xml));
-                console.warn("where 'stylesheet.xml' content is:");
-                console.log((new XMLSerializer()).serializeToString(xsl));
+                console.warn("for details on transformation xml and xsl inspect the following object={xml,xsl}");
+                console.log({
+                    xml:debugObject(xml,"file.xml",true),xsl:debugObject(xsl,"stylesheet.xml",true)
+                });
+                //debugObject(xml,"file.xml");
+                //debugObject(xsl,"stylesheet.xml");
+
+                var debugXML={object:xml,object2string:(new XMLSerializer()).serializeToString(xml)};
+
 
                 resultDocument = xsltProcessor.transformToFragment(xml, document);
+
+                console.log("--> the 'transformed document' is of type: "+dataType);
+                debugObject(resultDocument,"transformed document");
 
             }
             return(resultDocument);

@@ -16,6 +16,8 @@ var endpoints=[endpoint,
 console.debug("enable CORS on WMS-WFS endpoint or use a proxy");
 var geoserveruri="http://vesk.ve.ismar.cnr.it/geoserver/ows";
 
+var enablewms=false;
+
 var gettext=gettext||function (txt){return txt};
 var currentFoi = undefined, //added 20141006
     currentFois = [],
@@ -56,24 +58,26 @@ $(document).ready(function () {
  * @returns {Array}
  */
 function retrieveAllFeaturesOfInterest() {
-    var fois2Json = ritmaresk.utils.swe.sosGetFeatureOfInterestResponse_2_Json;
 
     var outputs = [];
-    // TODO: optimize this
+    // TODO: refine this
     SOSs.forEach(function (sos){
+        var output;
         if(sos.url===urlAdapterInat2SOS) {
             var pl='<sos:spatialFilter><fes:BBOX><fes:ValueReference>sams:shape</fes:ValueReference><gml:Envelope srsName="http://www.opengis.net/def/crs/EPSG/0/4326"> <gml:lowerCorner>0 0</gml:lowerCorner>' +
         '<gml:upperCorner>60 60</gml:upperCorner> </gml:Envelope> </fes:BBOX></sos:spatialFilter>';
-            ritmaresk.utils.swe.sosGetFeatureOfInterestResponsePOX2json(sos,pl);
+            output=ritmaresk.utils.swe.sosGetFeatureOfInterestResponsePOX2json(sos,pl);
         }
         else{
-            var output = fois2Json(sos.kvp.urlGetFeatureOfInterest());
-            var result = JSON.parse(output.textContent);
+            output = ritmaresk.utils.swe.sosGetFeatureOfInterestResponse_2_Json(sos.kvp.urlGetFeatureOfInterest());
             //currentFois = result.featureOfInterest;
             //console.warn(result);
             //return
-            outputs.push(result.featureOfInterest);
         }
+        output.featureOfInterest.sosurl=sos.url;
+        //console.log(output.featureOfInterest);
+        //var result = JSON.parse(output.textContent);
+        outputs.push(output.featureOfInterest);
     });
     return outputs;//result.featureOfInterest;
 }
@@ -84,15 +88,22 @@ function retrieveFeatureOfInterest(sos){
     return result.featureOfInterest;
 }
 
-function featureOfIInterest2GeoJson(foiJSON) {
+function featureOfIInterest2GeoJson(foiJSON,groupAdditionalProperties) {
     var coll = [];
+//console.warn(foiJSON);
     // REMARK: it is assumed at the moment a CRS with lat-lon order of coordinates: in geoJson the order must be reversed
     for (var i = 0; foiJSON && i < foiJSON.length; i++) {
+        //console.error(foiJSON[i].sampledFeature);
         var f = {
             "type": "Feature",
             "properties": {
                 "identifier": foiJSON[i].identifier,
-                "name": foiJSON[i].name
+                "id":foiJSON[i].id,
+                "name": foiJSON[i].name,
+                "sampledFeature": {
+                    "href":foiJSON[i].sampledFeature.href,
+                    "name":foiJSON[i].sampledFeature.title
+                }
             },
             "geometry": {
                 "type": foiJSON[i].geometry.type,
@@ -100,14 +111,22 @@ function featureOfIInterest2GeoJson(foiJSON) {
             },
             "crs": foiJSON[i].geometry.crs
         };
+        if(groupAdditionalProperties){
+
+            Object.keys(groupAdditionalProperties).map(function(k){
+                f.properties[k]=groupAdditionalProperties[k];
+            });
+
+        }
 
         coll.push(f);
         //var o=geojLayer.addData(f);
         //console.log(JSON.stringify(f));
     }
-    console.log(JSON.stringify(coll));
+    //console.log(JSON.stringify(coll));
     var res = {"type": "FeatureCollection", "features": coll};
-    console.log(JSON.stringify(res));
+    //console.log(JSON.stringify(res));
+    console.log(res);
     return res;
 }
 
@@ -119,7 +138,12 @@ function refreshGeoJsonLayer() {
     currentFoisGeoJsonLayer.clearLayers();
 
     featuresOfInterestSets.forEach(function(fois){
-        currentFoisGeoJsonLayer.addData(featureOfIInterest2GeoJson(fois));
+        var groupAdditionalProperties={};
+        groupAdditionalProperties.sosurl=fois.sosurl;
+        if(fois.sosurl===urlAdapterInat2SOS){
+         groupAdditionalProperties.color="red";
+        }
+        currentFoisGeoJsonLayer.addData(featureOfIInterest2GeoJson(fois,groupAdditionalProperties));
     });
     //var markers = L.markerClusterGroup();
     markers.addLayer(currentFoisGeoJsonLayer);
@@ -158,8 +182,21 @@ function loadMap() {
         return "(lat: " + latlng.lat + ", lon: " + latlng.lng + ")"
     }
     function currentFoiPopupHtml(feature){
-        console.warn(JSON.stringify(feature));
+        //console.warn(JSON.stringify(feature));
+        var sfLabel="";
+        if(feature.properties.sampledFeature.name!=="") {
+            sfLabel = feature.properties.sampledFeature.name;
+        }
+        else if(feature.properties.sampledFeature.href!==""){
+                sfLabel= feature.properties.sampledFeature.href;
+        }
+        else{
+            sfLabel=="http://www.opengis.net/def/nil/OGC/0/unknown";
+        }
+
         return "<h4>"+feature.properties.name+"</h4>"
+                +"sampled feature: "+sfLabel+"</br>"
+                +"source: "+feature.properties.sosurl+"</br>"
             +"lat: "+feature.geometry.coordinates[1]+ "</br>"
             +"lon: "+feature.geometry.coordinates[0]+ "</br>";
     }
@@ -188,9 +225,12 @@ function loadMap() {
 
     //currentFois=retrieveAllFeaturesOfInterest();
     // --- load WMS layers ---
-    ritmaresk.utils.swe.wmsGetLayers_NameTitleType(geoserveruri,false).forEach(function (l) {
-        overlayMaps[l.title] = createWmsLayer(geoserveruri, l.name, map);
-    });
+    if(enablewms) {
+        ritmaresk.utils.swe.wmsGetLayers_NameTitleType(geoserveruri, false).forEach(function (l) {
+            overlayMaps[l.title] = createWmsLayer(geoserveruri, l.name, map);
+        });
+    }
+
 
     /*
     // popup with link to set the FoI coordinates (EPSG:4326)
@@ -214,7 +254,8 @@ function loadMap() {
 
     currentFoisGeoJsonLayer.options = {
         style: function (feature) {
-            return {color: "blue"};
+            //return {color: "blue"};
+            return {color: feature.properties.color||"blue"};//TODO: plugin needed to manage marker colors
         },
         onEachFeature: function (feature, layer) {
             layer.bindPopup(currentFoiPopupHtml(feature)).openPopup();

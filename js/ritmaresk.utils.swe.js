@@ -63,16 +63,18 @@ ritmaresk.utils.swe = (function () {
         var xslt,
             xsl,
             xml,
-            output;
+            xmlOut;
 
         xslt = ritmaresk.XsltTransformer.getInstance();
         xsl = xslt.loadXMLDoc(filenameXsl);
         xml = xslt.loadXMLDoc(getFoiUrl);
 
         //output=xslt.transform(xsl,xml,undefined);
-        output = xslt.transform(xsl, xml);//,{para1:"pippo",para2:"pluto"});
+        xmlOut = xslt.transform(xsl, xml, undefined, undefined);//,{para1:"pippo",para2:"pluto"});
         //alert(output.textContent);
-        return output;
+        var stringJSON=(new XMLSerializer()).serializeToString(xmlOut);
+        stringJSON=stringJSON.replace(/[\n\r\t\s]/g, " ");
+        return JSON.parse(stringJSON);
     }
 
 
@@ -83,7 +85,6 @@ ritmaresk.utils.swe = (function () {
         //sos.capabilities.operationMetadata.operations.GetFeatureOfInterest.dcp.map(function(p){urlGetReq= p.method==="GET"? p.href:urlGetReq});
         //if(urlGetReq){return sosGetFeatureOfInterestResponse_2_Json(urlGetReq);}
         //else{
-         var xmlDocument=sos.pox.getFeatureOfInterestSOS2(payload);
 
         //}
         var xsl,
@@ -91,14 +92,17 @@ ritmaresk.utils.swe = (function () {
             xslt = ritmaresk.XsltTransformer.getInstance();
 
         xsl = xslt.loadXMLDoc(filenameXsl);
+        var xmlDocument=xslt.loadXMLDocFromString(sos.pox.getFeatureOfInterestSOS2(payload));
 
         var xmlOut = xslt.transform(xsl, xmlDocument, undefined, undefined);
 
-        stringJSON = (new XMLSerializer()).serializeToString(xmlOut);
-        console.log(stringJSON);
+        var stringJSON = (new XMLSerializer()).serializeToString(xmlOut);
+        //console.log(stringJSON);
         stringJSON = stringJSON.replace(/[\n\r\t\s]/g, " ");
-        console.log(stringJSON);
-        return JSON.parse(stringJSON);
+        //console.warn(stringJSON);
+        var jj=JSON.parse(stringJSON);
+        //console.warn(jj);
+        return jj;
     }
 
     /**
@@ -228,7 +232,7 @@ ritmaresk.utils.swe = (function () {
         //output=xslt.transform(xsl,xml,undefined);
 
         stringJSON=(new XMLSerializer()).serializeToString(xslt.transform(xsl, xml));
-        console.log(stringJSON);
+        console.log("json generated");
         return JSON.parse(stringJSON);
     }
 
