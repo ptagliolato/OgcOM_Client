@@ -53,6 +53,32 @@ $(document).ready(function () {
 
 });
 
+function retrieveAllObservations() {
+    // sosGetObservationResponsePOX2json
+    var outputs = [];
+    // TODO: refine this
+    SOSs.forEach(function (sos){
+        var output;
+        if(sos.url===urlAdapterInat2SOS) {
+            var pl='<sos:spatialFilter><fes:BBOX><fes:ValueReference>sams:shape</fes:ValueReference><gml:Envelope srsName="http://www.opengis.net/def/crs/EPSG/0/4326"> <gml:lowerCorner>0 0</gml:lowerCorner>' +
+                '<gml:upperCorner>60 60</gml:upperCorner> </gml:Envelope> </fes:BBOX></sos:spatialFilter>';
+            output=ritmaresk.utils.swe.sosGetFeatureOfInterestResponsePOX2json(sos,pl);
+        }
+        else{
+            output = ritmaresk.utils.swe.sosGetFeatureOfInterestResponse_2_Json(sos.kvp.urlGetFeatureOfInterest());
+            //currentFois = result.featureOfInterest;
+            //console.warn(result);
+            //return
+        }
+        output.featureOfInterest.sosurl=sos.url;
+        //console.log(output.featureOfInterest);
+        //var result = JSON.parse(output.textContent);
+        outputs.push(output.featureOfInterest);
+    });
+    return outputs;//result.featureOfInterest;
+
+}
+
 /**
  * returns an array of FOI in json format
  * @returns {Array}
@@ -182,7 +208,7 @@ function loadMap() {
         return "(lat: " + latlng.lat + ", lon: " + latlng.lng + ")"
     }
     function currentFoiPopupHtml(feature){
-        //console.warn(JSON.stringify(feature));
+        console.warn("cliccato " + JSON.stringify(feature));
         var sfLabel="";
         if(feature.properties.sampledFeature.name!=="") {
             sfLabel = feature.properties.sampledFeature.name;

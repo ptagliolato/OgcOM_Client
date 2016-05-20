@@ -51,6 +51,33 @@ ritmaresk.utils.swe = (function () {
 
 
     /**
+     * @todo change the name: sosGetObservation2Json
+     * @param {string} getFoiUrl kvp url of the sos:getFeatureOfInterest request
+     * @returns {object} featuresOfInterest a json representation of the features returned by the SOS (kvp binding), analogous to 52N json endpoint, but extended with the SRS
+     */
+    function sosGetObservation2Json(getFoiUrl) {
+        var
+            filenameXsl = "xslt/getObservationJson.xsl";
+        // filenameXml="xslt/FOI_test.xml";
+
+        var xslt,
+            xsl,
+            xml,
+            xmlOut;
+
+        xslt = ritmaresk.XsltTransformer.getInstance();
+        xsl = xslt.loadXMLDoc(filenameXsl);
+        xml = xslt.loadXMLDoc(getFoiUrl);
+
+        //output=xslt.transform(xsl,xml,undefined);
+        xmlOut = xslt.transform(xsl, xml, undefined, undefined);//,{para1:"pippo",para2:"pluto"});
+        //alert(output.textContent);
+        var stringJSON=(new XMLSerializer()).serializeToString(xmlOut);
+        stringJSON=stringJSON.replace(/[\n\r\t\s]/g, " ");
+        return JSON.parse(stringJSON);
+    }
+
+    /**
      * @todo change the name: sosGetFeatureOfInterest2Json
      * @param {string} getFoiUrl kvp url of the sos:getFeatureOfInterest request
      * @returns {object} featuresOfInterest a json representation of the features returned by the SOS (kvp binding), analogous to 52N json endpoint, but extended with the SRS
@@ -89,6 +116,32 @@ ritmaresk.utils.swe = (function () {
         //}
         var xsl,
             filenameXsl = "xslt/getFOIJson.xsl",
+            xslt = ritmaresk.XsltTransformer.getInstance();
+
+        xsl = xslt.loadXMLDoc(filenameXsl);
+        var xmlDocument=xslt.loadXMLDocFromString(sos.pox.getFeatureOfInterestSOS2(payload));
+
+        var xmlOut = xslt.transform(xsl, xmlDocument, undefined, undefined);
+
+        var stringJSON = (new XMLSerializer()).serializeToString(xmlOut);
+        //console.log(stringJSON);
+        stringJSON = stringJSON.replace(/[\n\r\t\s]/g, " ");
+        //console.warn(stringJSON);
+        var jj=JSON.parse(stringJSON);
+        //console.warn(jj);
+        return jj;
+    }
+
+    function sosGetObservationResponsePOX2json(sos,payload){
+        //PROMEMORIA: guardo quale metodo http mi consente il sos ed eseguo la req di conseguenza
+        //var urlGetReq="";
+        //sos.capabilities.operationMetadata.operations.GetFeatureOfInterest.dcp.map(function(p){urlGetReq= p.method==="GET"? p.href:urlGetReq});
+        //if(urlGetReq){return sosGetFeatureOfInterestResponse_2_Json(urlGetReq);}
+        //else{
+
+        //}
+        var xsl,
+            filenameXsl = "xslt/getObservationJson.xsl",
             xslt = ritmaresk.XsltTransformer.getInstance();
 
         xsl = xslt.loadXMLDoc(filenameXsl);

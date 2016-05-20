@@ -33,8 +33,8 @@
                         "id":"<xsl:value-of select="gml:identifier"/>",
 						"name":"<xsl:value-of select="gml:name"/>",
                         "sampledFeature":{
-                            "title":"<xsl:value-of select="//sf:sampledFeature/@xlink:title"/>",
-                            "href":"<xsl:value-of select="//sf:sampledFeature/@xlink:href"/>"
+                            "title":"<xsl:value-of select="sf:sampledFeature/@xlink:title"/>",
+                            "href":"<xsl:value-of select="sf:sampledFeature/@xlink:href"/>"
                         },
 						"geometry":{
 							<xsl:choose>
