@@ -64,6 +64,7 @@ ritmaresk.utils.swe = (function () {
             xsl,
             xml,
             xmlOut;
+        console.log("*********** sosGetObservation2Json **************");
 
         xslt = ritmaresk.XsltTransformer.getInstance();
         xsl = xslt.loadXMLDoc(filenameXsl);
@@ -140,12 +141,13 @@ ritmaresk.utils.swe = (function () {
         //else{
 
         //}
+        console.log("*********** sosGetObservationResponsePOX2json **************");
         var xsl,
             filenameXsl = "xslt/getObservationJson.xsl",
             xslt = ritmaresk.XsltTransformer.getInstance();
 
         xsl = xslt.loadXMLDoc(filenameXsl);
-        var xmlDocument=xslt.loadXMLDocFromString(sos.pox.getFeatureOfInterestSOS2(payload));
+        var xmlDocument=xslt.loadXMLDocFromString(sos.pox.getObservationSOS2(payload));
 
         var xmlOut = xslt.transform(xsl, xmlDocument, undefined, undefined);
 
@@ -300,7 +302,8 @@ ritmaresk.utils.swe = (function () {
         sosInsertionOperationsResponse2json: sosInsertionOperationsResponse2json,
         wmsDescribeLayerResponse2json:wmsDescribeLayerResponse2json,
         wmsGetLayersWFS_NameTitleType:wmsGetLayersWFS_NameTitleType,
-        wmsGetLayers_NameTitleType:wmsGetLayers_NameTitleType
+        wmsGetLayers_NameTitleType:wmsGetLayers_NameTitleType,
+        sosGetObservationResponsePOX2json:sosGetObservationResponsePOX2json
     };
 
 })();

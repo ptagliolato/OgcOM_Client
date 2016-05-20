@@ -53,27 +53,63 @@ $(document).ready(function () {
 
 });
 
-function retrieveAllObservations() {
+function retrieveObservationsByFOI(foi) {
     // sosGetObservationResponsePOX2json
+    console.log("*********** retrieveObservationsByFOI **************");
     var outputs = [];
     // TODO: refine this
     SOSs.forEach(function (sos){
         var output;
         if(sos.url===urlAdapterInat2SOS) {
-            var pl='<sos:spatialFilter><fes:BBOX><fes:ValueReference>sams:shape</fes:ValueReference><gml:Envelope srsName="http://www.opengis.net/def/crs/EPSG/0/4326"> <gml:lowerCorner>0 0</gml:lowerCorner>' +
-                '<gml:upperCorner>60 60</gml:upperCorner> </gml:Envelope> </fes:BBOX></sos:spatialFilter>';
-            output=ritmaresk.utils.swe.sosGetFeatureOfInterestResponsePOX2json(sos,pl);
+            var pl='<sos:featureOfInterest>' + foi + '</sos:featureOfInterest>';
+            output=ritmaresk.utils.swe.sosGetObservationResponsePOX2json(sos,pl);
+            console.log(output);
+//            output.featureOfInterest.sosurl=sos.url;
+
+            // merge the two parts of the observation: taxo and picture
+            var dest = {
+                phenomenonTime: "",
+                resultTime: "",
+                procedure: "",
+                featureOfInterest: {
+                    uri: "",
+                    title: ""
+                },
+                taxonomy: "",
+                picture: ""
+            };
+            for ( var i = 0; i < output.observations.length; i++ ) {
+                var o = output.observations[i];
+                console.log(o);
+                if ( o ) {
+                    if ( o.observedProperty ) {
+                        if (o.observedProperty == "http://rs.tdwg.org/dwc/terms/taxonID") {
+                            console.log("taxo");
+                            dest.phenomenonTime = o.phenomenonTime;
+                            dest.resultTime = o.resultTime;
+                            dest.procedure = o.procedure;
+                            dest.featureOfInterest = {
+                                uri: o.featureOfInterest.uri,
+                                title: o.featureOfInterest.title
+                            };
+                            dest.taxonomy = o.result;
+                        } else if ( o.observedProperty == "http://rs.tdwg.org/dwc/terms/associatedMedia" ) {
+                            console.log("picture " + o.result);
+                            dest.picture = o.result;
+                        } else {
+                        }
+                    } else {
+                        console.error("no observedProperty");
+                    }
+                } else {
+                    console.error("o is null");
+                }
+            }
+
+            //console.log(output.featureOfInterest);
+            //var result = JSON.parse(output.textContent);
+            outputs.push(dest);
         }
-        else{
-            output = ritmaresk.utils.swe.sosGetFeatureOfInterestResponse_2_Json(sos.kvp.urlGetFeatureOfInterest());
-            //currentFois = result.featureOfInterest;
-            //console.warn(result);
-            //return
-        }
-        output.featureOfInterest.sosurl=sos.url;
-        //console.log(output.featureOfInterest);
-        //var result = JSON.parse(output.textContent);
-        outputs.push(output.featureOfInterest);
     });
     return outputs;//result.featureOfInterest;
 
@@ -196,6 +232,45 @@ function refreshGeoJsonLayer() {
 
 }
 
+function drawObservation(foi) {
+    observation = retrieveObservationsByFOI(foi);
+    if ( observation.length > 0 ) {
+        observation = observation[0];
+        jQuery.ajaxSetup({async:false});
+        if ( observation.procedure ) {
+            $.get(observation.procedure + ".json").success(function(data) {
+
+                observation.user = data;
+            });
+        }
+        if ( observation.taxonomy ) {
+            $.get(observation.taxonomy + ".json").success(function(data) {
+                observation.taxonomyDetail = data;
+            });
+        }
+    }
+
+    jQuery.ajaxSetup({async:true});
+    console.log("qui");
+    console.log(observation);
+    var id = isolateObservationId(foi);
+    var html = "<div><h4>" + (observation.user.name ? observation.user.name : observation.user.login) + "</h4>"
+             + "<img src='" + observation.picture + "'>"
+             + "place guess: "+observation.featureOfInterest.title+"</br>"
+             + "taxonomy: "+observation.taxonomyDetail.common_name.name+"</br>"
+             + "lat: "+ "</br>"
+             + "lon: "+ "</br></div>";
+
+    console.log(id + " -> " + html);
+    $("#observation_result").html(html);
+}
+
+function isolateObservationId(foi) {
+    var foiParts = foi.split("/");
+    var id = foiParts[4];
+    return id;
+}
+
 var markers;
 function loadMap() {
 
@@ -208,7 +283,11 @@ function loadMap() {
         return "(lat: " + latlng.lat + ", lon: " + latlng.lng + ")"
     }
     function currentFoiPopupHtml(feature){
+        var isObservation = false;
         console.warn("cliccato " + JSON.stringify(feature));
+        if ( feature.properties.sosurl === urlAdapterInat2SOS ) {
+            isObservation = true;
+        }
         var sfLabel="";
         if(feature.properties.sampledFeature.name!=="") {
             sfLabel = feature.properties.sampledFeature.name;
@@ -220,11 +299,24 @@ function loadMap() {
             sfLabel=="http://www.opengis.net/def/nil/OGC/0/unknown";
         }
 
-        return "<h4>"+feature.properties.name+"</h4>"
-                +"sampled feature: "+sfLabel+"</br>"
-                +"source: "+feature.properties.sosurl+"</br>"
+        if ( isObservation ) {
+            var id = isolateObservationId(feature.properties.identifier);
+            /*
+            return "<div id='foi_" + id + "'/>";
+            */
+            return "<h4>"+feature.properties.name+"<button onclick='drawObservation(\"" + feature.properties.identifier + "\")'>view observation</button></h4>"
+            +"sampled feature: "+sfLabel+"</br>"
+            +"source: "+feature.properties.sosurl+"</br>"
             +"lat: "+feature.geometry.coordinates[1]+ "</br>"
             +"lon: "+feature.geometry.coordinates[0]+ "</br>";
+        } else {
+            return "<h4>"+feature.properties.name+"</h4>"
+                +"sampled feature: "+sfLabel+"</br>"
+                +"source: "+feature.properties.sosurl+"</br>"
+                +"lat: "+feature.geometry.coordinates[1]+ "</br>"
+                +"lon: "+feature.geometry.coordinates[0]+ "</br>";
+
+        }
     }
     function clickOnMapPopupHtml(latlng){
         return "<button class='btn btn-link' onclick='setCoordsForNewFoi(" + JSON.stringify(latlng) + ")'>"
@@ -239,6 +331,12 @@ function loadMap() {
         map = undefined;
     }
     map = map || L.map('map');
+
+    map.on('popupopen', function(e) {
+        var marker = e.popup._source;
+        console.log(marker.feature.properties.identifier);
+        drawObservation(marker.feature.properties.identifier);
+    });
 
     // --- base OSM map ---
     baseLayers["OpenStreetMap"] = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',

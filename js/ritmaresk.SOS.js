@@ -248,6 +248,23 @@ ritmaresk.Sos = (function () {	//sk sos endpoint url example = http://sk.sp7.ire
                 return self.pox.postData(xmlStringInsertObservation, callback, true);
             },
 
+            getObservationSOS2: function(param_xmlData){
+                var data="";
+                var header='<sos:GetObservation service="SOS" version="2.0.0" \
+                xmlns:sos="http://www.opengis.net/sos/2.0" \
+                xmlns:fes="http://www.opengis.net/fes/2.0" \
+                xmlns:gml="http://www.opengis.net/gml/3.2" \
+                xmlns:swe="http://www.opengis.net/swe/2.0" \
+                xmlns:xlink="http://www.w3.org/1999/xlink" \
+                xmlns:swes="http://www.opengis.net/swes/2.0" \
+                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/sos/2.0 http://schemas.opengis.net/sos/2.0/sos.xsd">';
+                var footer='</sos:GetObservation>';
+
+                console.log("*********** getObservationSOS2 **************");
+                data=header+param_xmlData+footer;
+                return self.pox.postData_synchronous(data);
+            },
+
             getFeatureOfInterestSOS2: function(param_xmlData){
                 var data="";
                 var header='<sos:GetFeatureOfInterest service="SOS" version="2.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:sos="http://www.opengis.net/sos/2.0" xmlns:fes="http://www.opengis.net/fes/2.0" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:swe="http://www.opengis.net/swe/2.0" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:swes="http://www.opengis.net/swes/2.0" xsi:schemaLocation="http://www.opengis.net/sos/2.0 http://schemas.opengis.net/sos/2.0/sos.xsd">';
