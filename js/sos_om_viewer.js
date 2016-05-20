@@ -254,12 +254,13 @@ function drawObservation(foi) {
     console.log("qui");
     console.log(observation);
     var id = isolateObservationId(foi);
-    var html = "<div><h4>" + (observation.user.name ? observation.user.name : observation.user.login) + "</h4>"
-             + "<img src='" + observation.picture + "'>"
-             + "place guess: "+observation.featureOfInterest.title+"</br>"
-             + "taxonomy: "+observation.taxonomyDetail.common_name.name+"</br>"
-             + "lat: "+ "</br>"
-             + "lon: "+ "</br></div>";
+    var html = "<div><h4>Observer: <a target='_blank' href='" + observation.procedure + "'>" + (observation.user.name ? observation.user.name : observation.user.login) + "</a></h4>";
+    if ( observation.picture ) {
+        html += "<img src='" + observation.picture + "'>";
+    }
+    html +=  "place guess: "+observation.featureOfInterest.title+"</br>"
+             + "taxonomy: <a target='_blank' href='" + observation.taxonomy + "'>"+observation.taxonomyDetail.common_name.name+"</a></br>"
+             + "</div>";
 
     console.log(id + " -> " + html);
     $("#observation_result").html(html);
